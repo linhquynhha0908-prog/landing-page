@@ -297,7 +297,6 @@ a {
     position: sticky;
     top: 0;
     padding: 0 24px;
-    will-change: transform;
     overflow: hidden;
 }
 
@@ -365,13 +364,11 @@ a {
     grid-template-columns: repeat(3, 1fr);
     column-gap: clamp(16px, 2.2vw, 32px);
     row-gap: clamp(20px, 2.8vw, 40px);
-    will-change: transform;
 }
 
 .sticky-grid-item {
     width: 100%;
     aspect-ratio: 1;
-    will-change: transform;
     border-radius: 12px;
     overflow: hidden;
 }

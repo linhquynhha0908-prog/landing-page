@@ -150,7 +150,7 @@ document.addEventListener('mouseleave', () => {
                 trigger: block,
                 start: 'top bottom',
                 end: 'top top',
-                scrub: true
+                scrub: 1
             }
         });
 
@@ -173,7 +173,7 @@ document.addEventListener('mouseleave', () => {
                 trigger: block,
                 start: 'top 25%',
                 end: 'bottom bottom',
-                scrub: true
+                scrub: 1
             }
         });
 
@@ -218,14 +218,6 @@ document.addEventListener('mouseleave', () => {
         }, '-=0.32');
     }
 
-    function initLenis() {
-        if (typeof Lenis === 'undefined') return;
-        var lenis = new Lenis({ lerp: 0.08, wheelMultiplier: 1.4 });
-        lenis.on('scroll', ScrollTrigger.update);
-        gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
-        gsap.ticker.lagSmoothing(0);
-    }
-
     function waitForImages(callback) {
         var images = document.querySelectorAll('.sticky-grid-image');
         var loaded = 0;
@@ -241,7 +233,6 @@ document.addEventListener('mouseleave', () => {
     }
 
     waitForImages(function () {
-        initLenis();
         initStickyGrid();
     });
 })();
