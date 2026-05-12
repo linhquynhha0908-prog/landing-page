@@ -108,6 +108,144 @@ document.addEventListener('mouseleave', () => {
     cursorVisible = false;
 });
 
+// Sticky Grid Scroll Animation (GSAP + ScrollTrigger)
+(function () {
+    if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    function initStickyGrid() {
+        var block = document.querySelector('.sticky-grid-section');
+        if (!block) return;
+
+        var wrapper = block.querySelector('.sticky-grid-wrapper');
+        var content = block.querySelector('.sticky-grid-content');
+        var title = block.querySelector('.sticky-grid-title');
+        var desc = block.querySelector('.sticky-grid-desc');
+        var btn = block.querySelector('.sticky-grid-btn');
+        var grid = block.querySelector('.sticky-grid-list');
+        var items = block.querySelectorAll('.sticky-grid-item');
+
+        if (!wrapper || !grid || items.length === 0) return;
+
+        var numColumns = 3;
+        var columns = [[], [], []];
+        items.forEach(function (item, i) {
+            columns[i % numColumns].push(item);
+        });
+
+        gsap.set([desc, btn], { opacity: 0, pointerEvents: 'none' });
+
+        var titleOffsetY = 0;
+        if (content && title) {
+            var dy = (content.offsetHeight - title.offsetHeight) / 2;
+            titleOffsetY = (dy / content.offsetHeight) * 100;
+            gsap.set(title, { yPercent: titleOffsetY });
+        }
+
+        gsap.from(wrapper, {
+            yPercent: -100,
+            ease: 'none',
+            scrollTrigger: {
+                trigger: block,
+                start: 'top bottom',
+                end: 'top top',
+                scrub: true
+            }
+        });
+
+        gsap.from(title, {
+            opacity: 0,
+            duration: 0.7,
+            ease: 'power1.out',
+            scrollTrigger: {
+                trigger: block,
+                start: 'top 57%',
+                toggleActions: 'play none none reset'
+            }
+        });
+
+        var wh = window.innerHeight;
+        var gridDy = wh - (wh - grid.offsetHeight) / 2;
+
+        var mainTimeline = gsap.timeline({
+            scrollTrigger: {
+                trigger: block,
+                start: 'top 25%',
+                end: 'bottom bottom',
+                scrub: true
+            }
+        });
+
+        var revealTl = gsap.timeline();
+        columns.forEach(function (column, colIndex) {
+            var fromTop = colIndex % 2 === 0;
+            revealTl.from(column, {
+                y: gridDy * (fromTop ? -1 : 1),
+                stagger: { each: 0.06, from: fromTop ? 'end' : 'start' },
+                ease: 'power1.inOut'
+            }, 'grid-reveal');
+        });
+        mainTimeline.add(revealTl);
+
+        var zoomTl = gsap.timeline({ defaults: { duration: 1, ease: 'power3.inOut' } });
+        zoomTl.to(grid, { scale: 2.05 });
+        zoomTl.to(columns[0], { xPercent: -40 }, '<');
+        zoomTl.to(columns[2], { xPercent: 40 }, '<');
+        zoomTl.to(columns[1], {
+            yPercent: function (index) {
+                return (index < Math.floor(columns[1].length / 2) ? -1 : 1) * 40;
+            },
+            duration: 0.5,
+            ease: 'power1.inOut'
+        }, '-=0.5');
+        mainTimeline.add(zoomTl, '-=0.6');
+
+        mainTimeline.add(function () {
+            var isVisible = mainTimeline.scrollTrigger.direction === 1;
+            gsap.timeline({ defaults: { overwrite: true } })
+                .to(title, {
+                    yPercent: isVisible ? 0 : titleOffsetY,
+                    duration: 0.7,
+                    ease: 'power2.inOut'
+                })
+                .to([desc, btn], {
+                    opacity: isVisible ? 1 : 0,
+                    duration: 0.4,
+                    ease: isVisible ? 'power1.inOut' : 'power1.out',
+                    pointerEvents: isVisible ? 'all' : 'none'
+                }, isVisible ? '-=90%' : '<');
+        }, '-=0.32');
+    }
+
+    function initLenis() {
+        if (typeof Lenis === 'undefined') return;
+        var lenis = new Lenis({ lerp: 0.08, wheelMultiplier: 1.4 });
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
+        gsap.ticker.lagSmoothing(0);
+    }
+
+    function waitForImages(callback) {
+        var images = document.querySelectorAll('.sticky-grid-image');
+        var loaded = 0;
+        var total = images.length;
+        if (total === 0) { callback(); return; }
+        images.forEach(function (img) {
+            if (img.complete) { loaded++; if (loaded === total) callback(); }
+            else {
+                img.addEventListener('load', function () { loaded++; if (loaded === total) callback(); });
+                img.addEventListener('error', function () { loaded++; if (loaded === total) callback(); });
+            }
+        });
+    }
+
+    waitForImages(function () {
+        initLenis();
+        initStickyGrid();
+    });
+})();
+
 // Interactive hover on feature cards
 document.querySelectorAll('.feature-card').forEach(card => {
     card.addEventListener('mousemove', (e) => {
